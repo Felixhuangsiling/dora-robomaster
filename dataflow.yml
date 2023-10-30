@@ -1,0 +1,21 @@
+nodes:
+  - id: video
+    operator:
+      python: video.py
+      inputs:
+        tick: dora/timer/millis/50
+      outputs:
+        - image
+  - id: plot
+    operator:
+      python: plot.py
+      inputs:
+        image: video/image 
+        bbox: object_detection/bbox
+  - id: object_detection
+    operator:
+      python: object_detection.py
+      inputs:
+        image: video/image
+      outputs:
+        - bbox
