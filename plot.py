@@ -3,7 +3,7 @@
 
 import os
 from typing import Callable, Optional, Union
-
+from robomaster import robot
 import cv2
 import numpy as np
 import pyarrow as pa
@@ -26,6 +26,8 @@ class Operator:
     """
 
     def __init__(self):
+        ep_robot = robot.Robot()
+        self.robot = ep_robot
         self.image = []
         self.bboxs = []
         self.bounding_box_messages = 0
@@ -66,7 +68,6 @@ class Operator:
                 .copy()  # copy the image because we want to modify it below
             )
             self.image = frame
-
             self.image_messages += 1
             print("received " + str(self.image_messages) + " images")
 
