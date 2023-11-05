@@ -3,7 +3,8 @@
 
 import os
 from typing import Callable, Optional, Union
-from robomaster import robot
+from robomaster import robot, led
+from robot import rob
 import cv2
 import numpy as np
 import pyarrow as pa
@@ -26,7 +27,7 @@ class Operator:
     """
 
     def __init__(self):
-        ep_robot = robot.Robot()
+        ep_robot = rob.ep_robot
         self.robot = ep_robot
         self.image = []
         self.bboxs = []
@@ -53,7 +54,7 @@ class Operator:
         Args:
             dora_input["id"] (str): Id of the dora_input declared in the yaml configuration
             dora_input["value"] (arrow array): message of the dora_input
-            send_output Callable[[str, bytes | pa.UInt8Array, Optional[dict]], None]:
+            send_output Callable[[str, Union[bytes, pa.UInt8Array], Optional[dict]], None]:
                 Function for sending output to the dataflow:
                 - First argument is the `output_id`
                 - Second argument is the data as either bytes or `pa.UInt8Array`
@@ -77,7 +78,7 @@ class Operator:
 
             self.bounding_box_messages += 1
             print("received " + str(self.bounding_box_messages) + " bounding boxes")
-
+        isbottle = False
         for bbox in self.bboxs:
             [
                 min_x,
@@ -87,6 +88,9 @@ class Operator:
                 confidence,
                 label,
             ] = bbox
+            """if LABELS[int(label)] == "bottle":
+                self.robot.led.set_led(r=255, g=0, b=0, effect=led.EFFECT_ON)
+                isbottle = True"""
             cv2.rectangle(
                 self.image,
                 (int(min_x), int(min_y)),
@@ -94,7 +98,6 @@ class Operator:
                 (0, 255, 0),
                 2,
             )
-
             cv2.putText(
                 self.image,
                 LABELS[int(label)] + f", {confidence:0.2f}",
@@ -105,7 +108,8 @@ class Operator:
                 2,
                 1,
             )
-
+        """if not isbottle:
+            self.robot.led.set_led(r=0, g=0, b=255, effect=led.EFFECT_ON)"""
         if CI != "true":
             cv2.imshow("frame", self.image)
             if cv2.waitKey(1) & 0xFF == ord("q"):

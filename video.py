@@ -1,13 +1,9 @@
-
-    
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import time
 from robomaster import camera, robot
 from typing import Callable, Optional, Union
-
+from robot import rob
 import os
 import cv2
 import numpy as np
@@ -27,11 +23,10 @@ class Operator:
     """
 
     def __init__(self):
-        ep_robot = robot.Robot()
-        ep_robot.initialize(conn_type="ap")
+        ep_robot = rob.ep_robot
 
         self.ep_camera = ep_robot.camera
-        self.ep_camera.start_video_stream(display=False)
+        self.ep_camera.start_video_stream(display=True)
         self.start_time = time.time()
 
     def on_event(
