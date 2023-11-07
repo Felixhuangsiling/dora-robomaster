@@ -1,14 +1,9 @@
 nodes:
-  - id: robot
-    operator:
-      python: robot.py
-      outputs:
-        - image
   - id: video
     operator:
       python: video.py
       inputs:
-        tick: dora/timer/millis/33
+        tick: dora/timer/millis/50
       outputs:
         - image
   - id: plot

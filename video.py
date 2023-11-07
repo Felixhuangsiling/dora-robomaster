@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import time
-from robomaster import camera, robot
+from robomaster import camera, robot, led
 from typing import Callable, Optional, Union
-from robot import rob
 import os
 import cv2
 import numpy as np
@@ -23,11 +21,10 @@ class Operator:
     """
 
     def __init__(self):
-        ep_robot = rob.ep_robot
-
-        self.ep_camera = ep_robot.camera
-        self.ep_camera.start_video_stream(display=True)
-        self.start_time = time.time()
+        self.ep_robot = robot.Robot()
+        self.ep_robot.initialize(conn_type="ap")
+        self.ep_robot.led.set_led(comp=led.COMP_ALL, r=255, g=0, b=0, effect=led.EFFECT_ON)
+        self.ep_camera = self.ep_robot.camera
 
     def on_event(
         self,
@@ -36,6 +33,7 @@ class Operator:
     ) -> DoraStatus:
         event_type = dora_event["type"]
         if event_type == "INPUT":
+            self.ep_camera.start_video_stream(display=False)
             frame = self.ep_camera.read_cv2_image()
             frame = cv2.resize(frame, (CAMERA_WIDTH, CAMERA_HEIGHT))
             send_output(
@@ -47,12 +45,6 @@ class Operator:
             print("received stop")
         else:
             print("received unexpected event:", event_type)
-
-
-        if time.time() - self.start_time < 100:
-            return DoraStatus.CONTINUE
-        else:
-            return DoraStatus.STOP
 
     def __del__(self):
         self.ep_camera.stop_video_stream()
