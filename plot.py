@@ -104,7 +104,7 @@ class Operator:
                 2,
                 1,
             )
-
+        
         if CI != "true":
             cv2.imshow("frame", self.image)
             if cv2.waitKey(1) & 0xFF == ord("q"):

@@ -2,7 +2,8 @@ nodes:
   - id: video
     operator:
       python: video.py
-      inputs:
+      inputs: 
+        bbox: object_detection/bbox
         tick: dora/timer/millis/50
       outputs:
         - image
@@ -18,4 +19,12 @@ nodes:
       inputs:
         image: video/image
       outputs:
-        - bbox 
+        - bbox
+
+#- id: control
+#    operator:
+#      python: control.py
+#      inputs:
+#        object_detection: object_detection/bbox
+#     outputs:
+#        - control
