@@ -29,6 +29,8 @@ class Operator:
     def __init__(self):
         self.ep_robot = robot.Robot()
         self.ep_robot.initialize(conn_type="ap")
+        self.ep_robot_camera = self.ep_robot.camera
+        self.ep_robot_chassis = self.ep_robot.chassis
 
         self.ep_robot_camera.start_video_stream(display=False)
         self.bboxs = []
@@ -70,6 +72,7 @@ class Operator:
     ):
         bboxs = dora_input["value"].to_numpy()
         self.bboxs = np.reshape(bboxs, (-1, 6))
+        isbottle = False
         for bbox in self.bboxs:
             [
                 min_x,
@@ -80,21 +83,12 @@ class Operator:
                 label,
             ] = bbox
             if LABELS[int(label)] == "bottle":
-                if (min_x + max_x) / 2 < 290:
-                    self.ep_robot.chassis.move(
-                        x=0, y=0.1, z=0, xy_speed=0.3
-                    ).wait_for_completed()
-
-                elif (min_x + max_x) / 2 > 350:
-                    self.ep_robot.chassis.move(
-                        x=0, y=0.1, z=0, xy_speed=0.3
-                    ).wait_for_completed()
-
-                else:
-                    self.ep_robot.chassis.move(
-                        x=0, y=0.1, z=0, xy_speed=0.3
-                    ).wait_for_completed()
+                isbottle = True
                 break
+        if isbottle:
+            self.ep_robot.led.set_led(r=255, g=0, b=0, effect=led.EFFECT_ON)
+        else:
+            self.ep_robot.led.set_led(r=0, g=255, b=0, effect=led.EFFECT_ON)
 
     def __del__(self):
         self.ep_robot.camera.stop_video_stream()

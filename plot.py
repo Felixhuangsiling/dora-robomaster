@@ -96,7 +96,8 @@ class Operator:
 
             cv2.putText(
                 self.image,
-                LABELS[int(label)] + f", {confidence:0.2f}",
+                LABELS[int(label)]
+                + f", {confidence:0.2f}",
                 (int(max_x), int(max_y)),
                 font,
                 0.75,
@@ -104,7 +105,7 @@ class Operator:
                 2,
                 1,
             )
-        
+
         if CI != "true":
             cv2.imshow("frame", self.image)
             if cv2.waitKey(1) & 0xFF == ord("q"):
