@@ -37,14 +37,22 @@ class Operator:
     ) -> DoraStatus:
         event_type = dora_event["type"]
         if event_type == "INPUT":
-            frame = self.ep_robot.camera.read_cv2_image()
-            frame = cv2.resize(frame, (CAMERA_WIDTH, CAMERA_HEIGHT))
-            send_output(
-                "image",
-                pa.array(frame.ravel()),
-                dora_event["metadata"],
-            )
-            return self.on_input(dora_event, send_output)
+            if dora_event["id"] == "tick":
+                print("received tick", flush=True)
+
+                frame = self.ep_robot_camera.read_cv2_image()
+                frame = cv2.resize(frame, (CAMERA_WIDTH, CAMERA_HEIGHT))
+                send_output(
+                    "image",
+                    pa.array(frame.ravel()),
+                    dora_event["metadata"],
+                )
+            elif dora_event["id"] == "bbox":
+                print("received bbox", flush=True)
+                self.on_input_bbox(dora_event, send_output)
+                print("Finished on bbox", flush=True)
+
+            return DoraStatus.CONTINUE
         elif event_type == "STOP":
             print("received stop")
         else:
