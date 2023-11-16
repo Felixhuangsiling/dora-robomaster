@@ -96,8 +96,7 @@ class Operator:
 
             cv2.putText(
                 self.image,
-                LABELS[int(label)]
-                + f", {confidence:0.2f}",
+                LABELS[int(label)] + f", {confidence:0.2f}",
                 (int(max_x), int(max_y)),
                 font,
                 0.75,
