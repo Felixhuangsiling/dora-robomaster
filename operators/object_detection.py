@@ -3,7 +3,6 @@
 
 from typing import Callable, Optional, Union
 
-import cv2
 import numpy as np
 import pyarrow as pa
 import torch
