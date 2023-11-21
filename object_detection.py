@@ -15,6 +15,7 @@ pa.array([])
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
 
+
 class Operator:
     """
     Infering object from images

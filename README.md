@@ -2,6 +2,13 @@
 
 This project aims to use Dora to enhance the capabilities of a RoboMaster S1.
 
+command to start the demo:
+```dora start dataflow.yml --attach```
+
+start the led test:
+```dora start led.yml --attach```
+
+
 ## Installation of the Robomaster S1 Hack
 
 This guide is an updated version of the original [Robomaster S1 SDK Hack Guide](https://www.bug-br.org.br/s1_sdk_hack.zip) and is intended for use on a Windows 11 system.
