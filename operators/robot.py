@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import time
-from robomaster import camera, robot, led
+from robomaster import robot
 from typing import Callable, Optional, Union
 
 # from robot import RobotController
-import os
 import cv2
 import numpy as np
 import pyarrow as pa
-from utils import LABELS
-from threading import Thread
-from threading import Lock
+from operators.utils import LABELS
 
 from dora import DoraStatus
-from time import sleep
 
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
-mutex = Lock()
+
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 
