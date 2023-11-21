@@ -7,7 +7,7 @@ from typing import Callable, Optional, Union
 import cv2
 import numpy as np
 import pyarrow as pa
-from operators.utils import LABELS
+from utils import LABELS
 
 from dora import DoraStatus
 

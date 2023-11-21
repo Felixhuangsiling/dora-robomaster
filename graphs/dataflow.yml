@@ -15,13 +15,13 @@ nodes:
     operator:
       python: ../operators/plot.py
       inputs:
-        image: video/image
+        image: robot/image
         bbox: object_detection/bbox
   - id: object_detection
     operator:
       python: ../operators/object_detection.py
       inputs:
-        image: video/image
+        image: robot/image
       outputs:
         - bbox
 #- id: control
