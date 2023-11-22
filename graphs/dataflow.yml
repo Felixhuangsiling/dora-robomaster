@@ -24,6 +24,17 @@ nodes:
         image: robot/image
       outputs:
         - bbox
+  - id: midas_op
+    operator:
+      outputs:
+        - depth_frame
+      inputs:
+        image: robot/image
+      python: ../operators/midas_op.py
+    env:
+      PYTORCH_DEVICE: "cuda"
+      MODEL_TYPE: "MiDaS_small"
+      MODEL_NAME: "MiDaS_small"
 #- id: control
 #    operator:
 #      python: control.py
