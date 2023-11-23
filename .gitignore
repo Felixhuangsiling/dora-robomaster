@@ -1,2 +1,3 @@
-yolov5n.pt
+graphs/yolov5n.pt
+operators/__pycache__/
 __pycache__/

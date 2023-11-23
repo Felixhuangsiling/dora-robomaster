@@ -1,7 +1,7 @@
 nodes:
-  - id: video
+  - id: robot
     operator:
-      python: video.py
+      python: ../operators/robot.py
       inputs:
         bbox:
           source: object_detection/bbox
@@ -13,18 +13,17 @@ nodes:
         - image
   - id: plot
     operator:
-      python: plot.py
+      python: ../operators/plot.py
       inputs:
-        image: video/image
+        image: robot/image
         bbox: object_detection/bbox
   - id: object_detection
     operator:
-      python: object_detection.py
+      python: ../operators/object_detection.py
       inputs:
-        image: video/image
+        image: robot/image
       outputs:
         - bbox
-
 #- id: control
 #    operator:
 #      python: control.py
