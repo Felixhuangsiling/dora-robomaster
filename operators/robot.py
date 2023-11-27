@@ -14,7 +14,7 @@ from dora import DoraStatus
 
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
-
+ROBOT_HEIGHT = 0.22
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 
@@ -73,7 +73,10 @@ class Operator:
         ):
             return
         bboxs = np.reshape(bboxs, (-1, 6))
+        obstacle = False
+        box = False
         for bbox in bboxs:
+            box = True
             [
                 min_x,
                 min_y,
@@ -82,29 +85,32 @@ class Operator:
                 confidence,
                 label,
             ] = bbox
-            if LABELS[int(label)] == "bottle":
-                """if (min_x + max_x) / 2 < 290:
-                    self.ep_robot.chassis.drive_wheels(w1=15, w2=-15, w3=-15, w4=15)
-                    time.sleep(1)
-                    self.ep_robot.gimbal.recenter().wait_for_completed()
-                elif (min_x + max_x) / 2 > 350:
-                    self.ep_robot.chassis.drive_wheels(w1=-15, w2=15, w3=15, w4=-15)
-                    time.sleep(1)
-                    self.ep_robot.gimbal.recenter().wait_for_completed()"""
-                if (min_x + max_x) / 2 < 290:
+            if (
+                min_x > 276
+                and min_x < 288
+                and max_x > 361
+                and max_x < 370
+                and min_y > 422
+                and min_y < 430
+                and max_y > 479
+            ):
+                continue
+            if LABELS[int(label)] == "ABC":
+                continue
+
+            if max_y > 370 and (min_x + max_x) / 2 > 240 and (min_x + max_x) / 2 < 400:
+                if (min_x + max_x) / 2 > 320:
                     self.event = self.ep_robot.chassis.move(
-                        x=0, y=-0.1, z=0, xy_speed=0.3
+                        x=0, y=-0.15, z=0, xy_speed=0.4
                     )
-                elif (min_x + max_x) / 2 > 350:
+                elif (min_x + max_x) / 2 <= 320:
                     self.event = self.ep_robot.chassis.move(
-                        x=0, y=0.1, z=0, xy_speed=0.3
+                        x=0, y=0.15, z=0, xy_speed=0.4
                     )
-                else:
-                    self.event = self.ep_robot.chassis.move(
-                        x=0.1, y=0, z=0, xy_speed=0.3
-                    )
-                print("finish waiting", flush=True)
+                obstacle = True
                 break
+        if obstacle == False and box == True:
+            self.event = self.ep_robot.chassis.move(x=0.1, y=0, z=0, xy_speed=0.5)
 
     def __del__(self):
         self.ep_robot.camera.stop_video_stream()
