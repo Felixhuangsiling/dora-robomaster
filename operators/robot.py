@@ -47,8 +47,15 @@ class Operator:
                     pa.array(frame.ravel()),
                     dora_event["metadata"],
                 )
-            elif dora_event["id"] == "bbox":
-                self.on_input_bbox(dora_event, send_output)
+            elif dora_event["id"] == "control":
+                if not (
+                    self.event is not None
+                    and not (self.event._event.isSet() and self.event.is_completed)
+                ):
+                    [x, y, z, speed] = dora_event["value"].to_numpy()
+                    self.event = self.ep_robot.chassis.move(
+                        x=x, y=y, z=z, xy_speed=speed
+                    )
 
             return DoraStatus.CONTINUE
 
@@ -57,60 +64,6 @@ class Operator:
         else:
             print("received unexpected event:", event_type)
         return DoraStatus.CONTINUE
-
-    def on_input_bbox(
-        self,
-        dora_input: dict,
-        send_output: Callable[[str, Union[bytes, pa.UInt8Array], Optional[dict]], None],
-    ):
-        bboxs = dora_input["value"].to_numpy()
-        bboxs = np.copy(bboxs)
-        self.control(bboxs)
-
-    def control(self, bboxs):
-        if self.event is not None and not (
-            self.event._event.isSet() and self.event.is_completed
-        ):
-            return
-        bboxs = np.reshape(bboxs, (-1, 6))
-        obstacle = False
-        box = False
-        for bbox in bboxs:
-            box = True
-            [
-                min_x,
-                min_y,
-                max_x,
-                max_y,
-                confidence,
-                label,
-            ] = bbox
-            if (
-                min_x > 276
-                and min_x < 288
-                and max_x > 361
-                and max_x < 370
-                and min_y > 422
-                and min_y < 430
-                and max_y > 479
-            ):
-                continue
-            if LABELS[int(label)] == "ABC":
-                continue
-
-            if max_y > 370 and (min_x + max_x) / 2 > 240 and (min_x + max_x) / 2 < 400:
-                if (min_x + max_x) / 2 > 320:
-                    self.event = self.ep_robot.chassis.move(
-                        x=0, y=-0.15, z=0, xy_speed=0.4
-                    )
-                elif (min_x + max_x) / 2 <= 320:
-                    self.event = self.ep_robot.chassis.move(
-                        x=0, y=0.15, z=0, xy_speed=0.4
-                    )
-                obstacle = True
-                break
-        if obstacle == False and box == True:
-            self.event = self.ep_robot.chassis.move(x=0.1, y=0, z=0, xy_speed=0.5)
 
     def __del__(self):
         self.ep_robot.camera.stop_video_stream()

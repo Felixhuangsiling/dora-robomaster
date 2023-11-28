@@ -3,8 +3,8 @@ nodes:
     operator:
       python: ../operators/robot.py
       inputs:
-        bbox:
-          source: object_detection/bbox
+        control:
+          source: planning/control
           queue_size: 1
         tick:
           source: dora/timer/millis/50
@@ -21,13 +21,15 @@ nodes:
     operator:
       python: ../operators/object_detection.py
       inputs:
-        image: robot/image
+        image:
+          source: robot/image
+          queue_size: 1
       outputs:
         - bbox
-#- id: control
-#    operator:
-#      python: control.py
-#      inputs:
-#        object_detection: object_detection/bbox
-#     outputs:
-#        - control
+  - id: planning
+    operator:
+      python: ../operators/planning_op.py
+      inputs:
+        bbox: object_detection/bbox
+      outputs:
+        - control
