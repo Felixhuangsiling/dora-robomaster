@@ -3,6 +3,7 @@
 
 from typing import Callable, Optional, Union
 
+from enum import Enum
 import numpy as np
 import pyarrow as pa
 import torch
@@ -34,8 +35,10 @@ class Operator:
         dora_input: dict,
         send_output: Callable[[str, Union[bytes, pa.array], Optional[dict]], None],
     ) -> DoraStatus:
+        x, y, z, acc, action = 0, 0, 0, 0, 0
         bboxs = dora_input["value"].to_numpy()
         bboxs = np.reshape(bboxs, (-1, 6))
+        arrays = pa.array([0, 0, 0, 0, 0])
         obstacle = False
         box = False
         for bbox in bboxs:
@@ -60,18 +63,29 @@ class Operator:
                 continue
             if LABELS[int(label)] == "ABC":
                 continue
-
+            
+            if LABELS[int(label)] == "bottle":
+                    action = 1
+            
             if max_y > 370 and (min_x + max_x) / 2 > 240 and (min_x + max_x) / 2 < 400:
                 if (min_x + max_x) / 2 > 320:
-                    arrays = pa.array([0, -0.15, 0, 0.4])
-                    send_output("control", arrays, dora_input["metadata"])
+                    y = -0.15
+                    acc = 0.4
                 elif (min_x + max_x) / 2 <= 320:
-                    arrays = pa.array([0, 0.15, 0, 0.4])
-                    send_output("control", arrays, dora_input["metadata"])
+                    y = 0.15
+                    acc = 0.4
+
+                if LABELS[int(label)] == "bottle":
+                    action = 1
                 obstacle = True
                 break
         if obstacle == False and box == True:
-            arrays = pa.array([0.1, 0, 0, 0.5])
+            x = 0.2
+            acc = 0.8
+
+        arrays = pa.array([x, y, z, acc, action])
+
+        if box == True:
             send_output("control", arrays, dora_input["metadata"])
 
         return DoraStatus.CONTINUE
