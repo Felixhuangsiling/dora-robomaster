@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from robomaster import robot
+from robomaster import robot, blaster, led, gimbal
 from typing import Callable, Optional, Union
 
 # from robot import RobotController
@@ -12,9 +12,11 @@ from utils import LABELS
 
 from dora import DoraStatus
 
+# Global variables, change it to adapt your needs
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
-
+FREQ = 20
+CONN = "ap"
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 
@@ -25,10 +27,19 @@ class Operator:
 
     def __init__(self):
         self.ep_robot = robot.Robot()
-        self.ep_robot.initialize(conn_type="ap")
+        self.ep_robot.initialize(conn_type=CONN)
         self.ep_robot.camera.start_video_stream(display=False)
         self.bboxs = []
+        self.ep_robot.gimbal.recenter().wait_for_completed()
+        self.position = [0, 0, 0]
+        self.ep_robot.chassis.sub_position(freq=FREQ, callback=self.position_callback)
         self.event = None
+
+    def position_callback(self, position_info):
+        x, y, z = position_info
+        print(x, y, z, flush=True)
+        print(position_info, flush=True)
+        self.position = [x, y, z]
 
     def on_event(
         self,
@@ -39,7 +50,7 @@ class Operator:
         if event_type == "INPUT":
             if dora_event["id"] == "tick":
                 frame = self.ep_robot.camera.read_cv2_image(
-                    timeout=1, strategy="newest"
+                    timeout=3, strategy="newest"
                 )
                 frame = cv2.resize(frame, (CAMERA_WIDTH, CAMERA_HEIGHT))
                 send_output(
@@ -47,64 +58,49 @@ class Operator:
                     pa.array(frame.ravel()),
                     dora_event["metadata"],
                 )
-            elif dora_event["id"] == "bbox":
-                self.on_input_bbox(dora_event, send_output)
+                send_output(
+                    "position",
+                    pa.array(self.position),
+                    dora_event["metadata"],
+                )
 
+            elif dora_event["id"] == "control":
+                print("received control", flush=True)
+                if not (
+                    self.event is not None
+                    and not (self.event._event.isSet() and self.event.is_completed)
+                ):
+                    [x, y, z, speed] = dora_event["value"].to_numpy()
+                    self.event = self.ep_robot.chassis.move(
+                        x=x, y=y, z=z, xy_speed=speed
+                    )
+            elif dora_event["id"] == "blaster":
+                [brightness] = dora_event["value"].to_numpy()
+                if brightness > 0:
+                    self.ep_robot.blaster.set_led(
+                        brightness=brightness, effect=blaster.LED_ON
+                    )
+                else:
+                    self.ep_robot.blaster.set_led(brightness=0, effect=blaster.LED_OFF)
+            elif dora_event["id"] == "led":
+                print("received led", flush=True)
+                [r, g, b] = dora_event["value"].to_numpy()
+                self.ep_robot.led.set_led(
+                    comp=led.COMP_ALL, r=r, g=g, b=b, effect=led.EFFECT_ON
+                )
+
+            elif dora_event["id"] == "stop":
+                return DoraStatus.STOP
             return DoraStatus.CONTINUE
 
         elif event_type == "STOP":
             print("received stop")
+            return DoraStatus.STOP
         else:
             print("received unexpected event:", event_type)
         return DoraStatus.CONTINUE
 
-    def on_input_bbox(
-        self,
-        dora_input: dict,
-        send_output: Callable[[str, Union[bytes, pa.UInt8Array], Optional[dict]], None],
-    ):
-        bboxs = dora_input["value"].to_numpy()
-        bboxs = np.copy(bboxs)
-        self.control(bboxs)
-
-    def control(self, bboxs):
-        if self.event is not None and not (
-            self.event._event.isSet() and self.event.is_completed
-        ):
-            return
-        bboxs = np.reshape(bboxs, (-1, 6))
-        for bbox in bboxs:
-            [
-                min_x,
-                min_y,
-                max_x,
-                max_y,
-                confidence,
-                label,
-            ] = bbox
-            if LABELS[int(label)] == "bottle":
-                """if (min_x + max_x) / 2 < 290:
-                    self.ep_robot.chassis.drive_wheels(w1=15, w2=-15, w3=-15, w4=15)
-                    time.sleep(1)
-                    self.ep_robot.gimbal.recenter().wait_for_completed()
-                elif (min_x + max_x) / 2 > 350:
-                    self.ep_robot.chassis.drive_wheels(w1=-15, w2=15, w3=15, w4=-15)
-                    time.sleep(1)
-                    self.ep_robot.gimbal.recenter().wait_for_completed()"""
-                if (min_x + max_x) / 2 < 290:
-                    self.event = self.ep_robot.chassis.move(
-                        x=0, y=-0.1, z=0, xy_speed=0.3
-                    )
-                elif (min_x + max_x) / 2 > 350:
-                    self.event = self.ep_robot.chassis.move(
-                        x=0, y=0.1, z=0, xy_speed=0.3
-                    )
-                else:
-                    self.event = self.ep_robot.chassis.move(
-                        x=0.1, y=0, z=0, xy_speed=0.3
-                    )
-                print("finish waiting", flush=True)
-                break
-
     def __del__(self):
+        self.ep_robot.unsub_position()
         self.ep_robot.camera.stop_video_stream()
+        self.ep_robot.close()
