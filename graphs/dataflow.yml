@@ -3,6 +3,13 @@ nodes:
     operator:
       python: ../operators/robot.py
       inputs:
+        stop: planning/stop
+        blaster: 
+          source: planning/blaster
+          queue_size: 1
+        led:
+          source: planning/led
+          queue_size: 1
         control:
           source: planning/control
           queue_size: 1
@@ -31,6 +38,10 @@ nodes:
     operator:
       python: ../operators/planning_op.py
       inputs:
+        position: robot/position
         bbox: object_detection/bbox
       outputs:
         - control
+        - led
+        - blaster
+        - stop
